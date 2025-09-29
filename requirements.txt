@@ -2,3 +2,4 @@ streamlit==1.32.2
 streamlit-drawable-canvas
 Pillow
 opencv-python-headless==4.9.0.80
+textblob
