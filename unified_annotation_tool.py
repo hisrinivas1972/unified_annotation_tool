@@ -12,34 +12,46 @@ st.title("🧠 Unified Annotation Tool (Text, Image, Audio, Video)")
 tab1, tab2, tab3, tab4 = st.tabs(["📝 Text", "🖼️ Image", "🎧 Audio", "🎥 Video"])
 
 # -------------------------------
-# 📝 TEXT ANNOTATION
+# 📝 TEXT ANNOTATION TAB
 # -------------------------------
 with tab1:
     st.header("📝 Text Annotation")
 
-    sample_texts = st.text_area("Paste multiple texts (one per line):", height=150)
+    sample_texts = st.text_area(
+        "Paste multiple texts (one per line):",
+        height=150,
+        placeholder="Example:\nI love this product.\nThis is terrible.\nMeh, it’s okay."
+    )
 
     if sample_texts:
         lines = [line.strip() for line in sample_texts.strip().split("\n") if line.strip()]
         labels = []
-        st.write("### Annotate Each Line")
+
+        st.write("### 🔖 Annotate Each Line")
 
         for i, text in enumerate(lines):
             st.markdown(f"**{i+1}.** {text}")
             label = st.selectbox(
                 f"Label for line {i+1}",
-                options=["Positive", "Neutral", "Negative", "Other"],
+                options=["-- Select Label --", "Positive", "Neutral", "Negative", "Other"],
                 key=f"text_label_{i}"
             )
             labels.append({"text": text, "label": label})
 
-        if labels:
+        # 🛑 Warn if any line is not labeled
+        if any(label['label'] == "-- Select Label --" for label in labels):
+            st.warning("⚠️ Please label all lines before downloading.")
+        else:
             st.subheader("🧾 Annotations")
             st.json(labels)
 
             text_json = json.dumps({"annotations": labels}, indent=2)
-            st.download_button("📥 Download JSON", text_json, file_name="text_annotations.json", mime="application/json")
-
+            st.download_button(
+                label="📥 Download JSON",
+                data=text_json,
+                file_name="text_annotations.json",
+                mime="application/json"
+            )
 
 # -------------------------------
 # 🖼️ IMAGE ANNOTATION
