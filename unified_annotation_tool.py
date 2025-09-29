@@ -5,17 +5,22 @@ import cv2
 import tempfile
 import os
 import json
+from textblob import TextBlob
 
 st.set_page_config(page_title="Unified Annotation Tool", layout="wide")
 st.title("🧠 Unified Annotation Tool (Text, Image, Audio, Video)")
 
 tab1, tab2, tab3, tab4 = st.tabs(["📝 Text", "🖼️ Image", "🎧 Audio", "🎥 Video"])
 
+from textblob import TextBlob
+import streamlit as st
+import json
+
 # -------------------------------
-# 📝 TEXT ANNOTATION TAB
+# 📝 TEXT ANNOTATION TAB WITH AUTO LABELING
 # -------------------------------
 with tab1:
-    st.header("📝 Text Annotation")
+    st.header("📝 Text Annotation with Auto-Sentiment")
 
     sample_texts = st.text_area(
         "Paste multiple texts (one per line):",
@@ -27,32 +32,40 @@ with tab1:
         lines = [line.strip() for line in sample_texts.strip().split("\n") if line.strip()]
         labels = []
 
-        st.write("### 🔖 Annotate Each Line")
+        st.write("### 🤖 Auto-Labeled Lines")
 
         for i, text in enumerate(lines):
             st.markdown(f"**{i+1}.** {text}")
-            label = st.selectbox(
-                f"Label for line {i+1}",
-                options=["-- Select Label --", "Positive", "Neutral", "Negative", "Other"],
-                key=f"text_label_{i}"
-            )
-            labels.append({"text": text, "label": label})
 
-        # 🛑 Warn if any line is not labeled
-        if any(label['label'] == "-- Select Label --" for label in labels):
-            st.warning("⚠️ Please label all lines before downloading.")
-        else:
-            st.subheader("🧾 Annotations")
-            st.json(labels)
+            # 🔍 Use TextBlob to calculate sentiment polarity
+            blob = TextBlob(text)
+            polarity = blob.sentiment.polarity
 
-            text_json = json.dumps({"annotations": labels}, indent=2)
-            st.download_button(
-                label="📥 Download JSON",
-                data=text_json,
-                file_name="text_annotations.json",
-                mime="application/json"
-            )
+            # 📊 Auto-label based on polarity
+            if polarity > 0.1:
+                sentiment = "Positive"
+            elif polarity < -0.1:
+                sentiment = "Negative"
+            else:
+                sentiment = "Neutral"
 
+            st.write(f"🔍 **Auto-Label**: `{sentiment}`")
+
+            labels.append({
+                "text": text,
+                "auto_label": sentiment
+            })
+
+        st.subheader("🧾 Annotated Results")
+        st.json(labels)
+
+        text_json = json.dumps({"annotations": labels}, indent=2)
+        st.download_button(
+            label="📥 Download JSON",
+            data=text_json,
+            file_name="auto_text_annotations.json",
+            mime="application/json"
+        )
 # -------------------------------
 # 🖼️ IMAGE ANNOTATION
 # -------------------------------
